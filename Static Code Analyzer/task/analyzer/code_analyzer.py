@@ -1,4 +1,6 @@
 import re
+import sys
+import os
 
 def check_too_long(line, line_number):
     if len(line) > 79:
@@ -65,6 +67,7 @@ def check_TODO(line, line_number):
 
 
 def check_blank_lines(line, line_number, blank_lines):
+    """ Docstring. """
     is_blank_line = (line == "\n")
     if is_blank_line:
         blank_lines.append(line_number)
@@ -72,11 +75,22 @@ def check_blank_lines(line, line_number, blank_lines):
         print(f"Line {line_number}: S006 More than two blank lines used before this line")
 
 
-def main():
-    # test = r"C:\hyper_skill\static_code_analyzer_project\Static Code Analyzer\task\analyzer\test.txt"
-    code_path = input()
-    test = r"C:\hyper_skill\static_code_analyzer_project\Static Code Analyzer\task\test\test_6.py"
-    with open(code_path) as f:
+def list_files_from_input(input_path):
+    """ Return a list of files to check on """
+    input_path = rf"{input_path}"
+    file_list = []
+    # check if path leads to specific file or to directly
+    if input_path[-2:] == "py":
+        file_list.append(input_path)
+        return file_list
+    all_files = os.listdir(input_path)
+    for file in all_files:
+        if file.endswith(".py"):
+            file_list.append(file)
+    return file_list
+
+def static_code_analyzer(file):
+    with open(file) as f:
         Lines = f.readlines()
         line_number = 0
         blank_lines = []
@@ -89,6 +103,18 @@ def main():
             # if not is_comment_line:
             check_TODO(line, line_number)
             check_blank_lines(line, line_number, blank_lines)
+
+
+
+def main():
+    # test = r"C:\hyper_skill\static_code_analyzer_project\Static Code Analyzer\task\analyzer\test.txt"
+    # code_path = input()
+    input_path = r"C:\hyper_skill\static_code_analyzer_project\Static Code Analyzer\task\test\test_6.py"
+    import sys
+     # can be directoy or file
+    file_list = list_files_from_input(sys.argv[1])
+    for file in file_list:
+        static_code_analyzer(file)
 
 if __name__ == '__main__':
     main()
