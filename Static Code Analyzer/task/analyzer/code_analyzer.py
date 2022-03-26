@@ -131,8 +131,8 @@ def list_files_from_input(input_path):
 
 def check_class_camel_case(line, line_number):
     if class_construction_line(line):
-        class_name = line.lstrip(" ").lstrip("class").lstrip(" ").split('(')[0]
-        if name_extracted := re.match(r"[ ]*class (?P<name>\w+)", line):
+        name_extracted = re.match(r"[ ]*class (?P<name>\w+)", line)
+        if name_extracted:
             class_name = name_extracted["name"]
             camel_case_regex = r"(?:[A-Z][a-z0-9]+)+"
             if not re.match(camel_case_regex, class_name):
