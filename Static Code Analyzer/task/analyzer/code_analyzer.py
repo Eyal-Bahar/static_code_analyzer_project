@@ -110,6 +110,9 @@ def check_spaces_at_declaration(line, line_number):
         if striped_line[0] == " " and striped_line[1] == " ":
             msg = "S007 Too many spaces after 'def'"
             print_msg(line_number, msg)
+    # I found also this "simpler" solution:
+    #   def check_007(s):
+            #return re.match(r"[ ]*(?:class|def) ( )+", s)
 
 def list_files_from_input(input_path):
     """ Return a list of files to check on """
@@ -129,17 +132,18 @@ def list_files_from_input(input_path):
 def check_class_camel_case(line, line_number):
     if class_construction_line(line):
         class_name = line.lstrip(" ").lstrip("class").lstrip(" ").split('(')[0]
-        class_name = class_name.split(':')[0]
-        if class_name[0] != class_name[0].upper():
-            msg = f"S008 Class name '{class_name}' should use CamelCase"
-            print_msg(line_number, msg)
+        if name_extracted := re.match(r"[ ]*class (?P<name>\w+)", line):
+            class_name = name_extracted["name"]
+            camel_case_regex = r"(?:[A-Z][a-z0-9]+)+"
+            if not re.match(camel_case_regex, class_name):
+                msg = f"S008 Class name '{class_name}' should use CamelCase"
+                print_msg(line_number, msg)
 
 
 def check_func_snake_case(line, line_number):
     if func_construction_line(line):
         func_name = line.lstrip(" ").lstrip("def").lstrip(" ").split('(')[0]
-        if not bool(re.match(r"^([^A-Z]+)+$", func_name)):
-        # if ((func_name[0] == func_name[0].upper()) and (func_name[0] != func_name[0].lower())):
+        if not bool(re.match(r"[a-z_0-9]+", func_name)):
             msg = f"S009 Function name '{func_name}' should use snake_case"
             print_msg(line_number, msg)
 
