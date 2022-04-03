@@ -1,7 +1,8 @@
 """
-Return code analysis errors
+Return code analysis errors for files in directory.
 
-A simple code analyzer based on manual checks of lines as well as on the ast module
+A simple code analyzer based on manual checks of lines as well as on the ast module.
+Catching 12 different errors
 """
 import re
 import sys
@@ -253,6 +254,7 @@ def static_code_analyzer(file):
         check_default_mutable(script, error_dict) # S012
     print_file_errors(file, error_dict)
 
+
 def main():
     # test = r"C:\hyper_skill\static_code_analyzer_project\Static Code Analyzer\task\analyzer\test.txt"
     # code_path = input()
@@ -261,7 +263,6 @@ def main():
     file_list = list_files_from_input(sys.argv[1])
     for file in file_list:
         static_code_analyzer(file)
-        
 
 
 if __name__ == '__main__':
