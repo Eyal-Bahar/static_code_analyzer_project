@@ -140,12 +140,63 @@ def check_class_camel_case(line, line_number):
                 print_msg(line_number, msg)
 
 
+def is_camel_case(*code):
+    condition = r"[a-z_0-9]+"
+    return all([bool(re.match(condition, snippet)) for snippet in list(code)])
+
+
 def check_func_snake_case(line, line_number):
     if func_construction_line(line):
         func_name = line.lstrip(" ").lstrip("def").lstrip(" ").split('(')[0]
-        if not bool(re.match(r"[a-z_0-9]+", func_name)):
+        if not is_camel_case(func_name):
             msg = f"S009 Function name '{func_name}' should use snake_case"
             print_msg(line_number, msg)
+
+
+def check_arg_name_snake_case(code, line_number, filename):
+    import ast
+    with open(filename) as g:
+        script = g.read()
+        tree = ast.parse(script)
+        nodes = ast.walk(tree)
+        for node in nodes:
+            if isinstance(node, ast.FunctionDef):
+                if node.lineno == line_number:
+                    arg_names = [a.arg for a in node.args.args]  # name [a.name for a in function.names]
+                    for arg_name in arg_names:
+                        if not is_camel_case(arg_name):
+                            msg = f"S010 Argument name '{arg_name}' should use snake_case"
+                            print_msg(line_number, msg)
+
+
+def check_var_name_snake_case(line, line_number, filename):
+    import ast
+    with open(filename) as g:
+        script = g.read()
+        tree = ast.parse(script)
+        nodes = ast.walk(tree)
+        for node in nodes:
+            if isinstance(node, ast.Name) and  isinstance(node.ctx, ast.Store):
+                var_name = node.id
+                if not is_camel_case(var_name) and node.lineno == line_number:
+                        msg = f"S011 Variable '{var_name}' in function should be snake_case"
+                        print_msg(line_number, msg)
+
+
+def check_default_mutable(line, line_number):
+    import ast
+    with open(filename) as g:
+        script = g.read()
+        tree = ast.parse(script)
+        nodes = ast.walk(tree)
+        for node in nodes:
+            if isinstance(node, ast.FunctionDef):
+                if node.lineno == line_number:
+                    for defaults in node.args.defaults:
+                        if isinstance(defaults, ast.List) or isinstance(defaults, ast.Dict):
+                            msg = f"S012 Default argument value is mutable"
+                            print_msg(line_number, msg)
+
 
 
 def static_code_analyzer(file):
@@ -157,16 +208,19 @@ def static_code_analyzer(file):
         blank_lines = []
         for line in Lines:
             line_number += 1
-            check_too_long(line, line_number)
-            check_indentation(line, line_number)
-            check_semi_col(line, line_number)
-            is_comment_line = check_hash_space(line, line_number)
+            check_too_long(line, line_number) # S001
+            check_indentation(line, line_number) # S002
+            check_semi_col(line, line_number) # S003
+            is_comment_line = check_hash_space(line, line_number) # S004
             # if not is_comment_line:
-            check_TODO(line, line_number)
-            check_blank_lines(line, line_number, blank_lines)
-            check_spaces_at_declaration(line, line_number)
-            check_class_camel_case(line, line_number)
-            check_func_snake_case(line, line_number)
+            check_TODO(line, line_number) # S005
+            check_blank_lines(line, line_number, blank_lines) # S006
+            check_spaces_at_declaration(line, line_number) # S007
+            check_class_camel_case(line, line_number) # S008
+            check_func_snake_case(line, line_number) # S009
+            check_arg_name_snake_case(line, line_number, filename) #S010
+            check_var_name_snake_case(line, line_number,filename)  # S011
+            check_default_mutable(line,line_number) # S012
 
 
 def main():
