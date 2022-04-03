@@ -1,8 +1,12 @@
+"""
+Return code analysis errors
+
+A simple code analyzer based on manual checks of lines as well as on the ast module
+"""
 import re
 import sys
 import os
 from collections import defaultdict
-
 
 def error_list_fun(msg_number: int):
     error_list = {1: "S001 Too long",
@@ -82,7 +86,7 @@ def check_hash_space(line, line_number, error_dict):
                 error_dict[line_number].append(error_number)
                 # msg = "S004 At least two spaces required before inline comments"
                 return is_comment_line
-    return is_comment_line
+    return
 
 
 def check_TODO(line, line_number, error_dict):
@@ -235,8 +239,7 @@ def static_code_analyzer(file):
             check_too_long(line, line_number, error_dict) # S001
             check_indentation(line, line_number, error_dict) # S002
             check_semi_col(line, line_number, error_dict) # S003
-            is_comment_line = check_hash_space(line, line_number, error_dict) # S004
-            # if not is_comment_line:
+            check_hash_space(line, line_number, error_dict) # S004
             check_TODO(line, line_number, error_dict) # S005
             check_blank_lines(line, line_number, blank_lines, error_dict) # S006
             check_spaces_at_declaration(line, line_number, error_dict) # S007
