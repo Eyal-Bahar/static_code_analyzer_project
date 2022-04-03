@@ -4,9 +4,20 @@ import os
 from collections import defaultdict
 
 
+def error_list_fun(msg_number: int):
+    error_list = {1: "S001 Too long",
+                  2: "S002 Indentation is not a multiple of four",
+                  3: "S003 Unnecessary semicolon",
+                  4: "S004 At least two spaces required before inline comments",
+                  5: "S005 TODO found",
+                  6: "S006 More than two blank lines used before this line",
+                  }
+    return error_list[msg_number]
 
-def print_msg(line_number, msg):
-    global filename
+
+def print_msg(filename, line_number, msg):
+    if type(msg) == int:
+        msg = error_list_fun(msg)
     print(f"{filename}: Line {line_number}: {msg}")
 
 
@@ -14,8 +25,8 @@ def check_too_long(line, line_number, error_dict):
     if len(line) > 79:
         error_number = 1
         error_dict[line_number].append(error_number)
-        msg = "S001 Too long"
-        print_msg(line_number, msg) # print(f"Line {line_number}: S001 Too long")
+        # msg = "S001 Too long"
+
 
 def check_indentation(line, line_number, error_dict):
     import re
@@ -23,8 +34,8 @@ def check_indentation(line, line_number, error_dict):
     if (indentation_length % 4) != 0:
         error_number = 2
         error_dict[line_number].append(error_number)
-        msg = "S002 Indentation is not a multiple of four"
-        print_msg(line_number, msg)
+        # msg = "S002 Indentation is not a multiple of four"
+
 
 def numer_of_quotes_after(line, idx):
     pattern1 = "[\'\"]"
@@ -52,8 +63,7 @@ def check_semi_col(line, line_number, error_dict):
         if not in_a_string and not in_a_comment: # if its even its not part of a string
             error_number = 3
             error_dict[line_number].append(error_number)
-            msg = "S003 Unnecessary semicolon"
-            print_msg(line_number, msg)
+            # msg = "S003 Unnecessary semicolon"
             return
 
 
@@ -70,8 +80,7 @@ def check_hash_space(line, line_number, error_dict):
             if line[hash_idx - 1] != " " or line[hash_idx - 2] != line[hash_idx - 1]:
                 error_number = 4
                 error_dict[line_number].append(error_number)
-                msg = "S004 At least two spaces required before inline comments"
-                print_msg(line_number, msg)
+                # msg = "S004 At least two spaces required before inline comments"
                 return is_comment_line
     return is_comment_line
 
@@ -84,8 +93,7 @@ def check_TODO(line, line_number, error_dict):
         if in_a_comment:
             error_number = 5
             error_dict[line_number].append(error_number)
-            msg = "S005 TODO found"
-            print_msg(line_number, msg)
+            # msg = "S005 TODO found"
             return
 
 
@@ -97,9 +105,7 @@ def check_blank_lines(line, line_number, blank_lines, error_dict):
     if (line_number-3) in blank_lines and (line_number-1) in blank_lines and (line_number-2) in blank_lines:
         error_number = 6
         error_dict[line_number].append(error_number)
-        msg = "S006 More than two blank lines used before this line"
-        print_msg(line_number, msg)
-
+        # msg = "S006 More than two blank lines used before this line"
 
 def class_construction_line(line):
     first_char_idx = len(line) - len(line.lstrip())
@@ -120,16 +126,15 @@ def check_spaces_at_declaration(line, line_number, error_dict):
             # error_number = 7
             msg = "S007 Too many spaces after 'class'"
             error_dict[line_number].append(msg)
-            print_msg(line_number, msg)
     if func_construction_line(line):
         striped_line = line.lstrip(" ").lstrip("def")
         if striped_line[0] == " " and striped_line[1] == " ":
             msg = "S007 Too many spaces after 'def'"
             error_dict[line_number].append(msg)
-            print_msg(line_number, msg)
     # I found also this "simpler" solution:
     #   def check_007(s):
             #return re.match(r"[ ]*(?:class|def) ( )+", s)
+
 
 def list_files_from_input(input_path):
     """ Return a list of files to check on """
@@ -156,7 +161,7 @@ def check_class_camel_case(line, line_number, error_dict):
                 msg = f"S008 Class name '{class_name}' should use CamelCase"
                 # error_number = 8
                 error_dict[line_number].append(msg)
-                print_msg(line_number, msg)
+
 
 
 def is_camel_case(*code):
@@ -170,70 +175,58 @@ def check_func_snake_case(line, line_number, error_dict):
         if not is_camel_case(func_name):
             msg = f"S009 Function name '{func_name}' should use snake_case"
             error_dict[line_number].append(msg)
-            print_msg(line_number, msg)
 
 
-def check_arg_name_snake_case(code, line_number, filename, error_dict):
+def check_arg_name_snake_case(script, error_dict):
     import ast
-    with open(filename) as g:
-        script = g.read()
-        tree = ast.parse(script)
-        nodes = ast.walk(tree)
-        for node in nodes:
-            if isinstance(node, ast.FunctionDef):
-                if node.lineno == line_number:
-                    arg_names = [a.arg for a in node.args.args]  # name [a.name for a in function.names]
-                    for arg_name in arg_names:
-                        if not is_camel_case(arg_name):
-                            msg = f"S010 Argument name '{arg_name}' should use snake_case"
-                            error_dict[line_number].append(msg)
-                            print_msg(line_number, msg)
+    tree = ast.parse(script)
+    nodes = ast.walk(tree)
+    for node in nodes:
+        if isinstance(node, ast.FunctionDef):
+            if node.lineno:
+                arg_names = [a.arg for a in node.args.args]  # name [a.name for a in function.names]
+                for arg_name in arg_names:
+                    if not is_camel_case(arg_name):
+                        msg = f"S010 Argument name '{arg_name}' should use snake_case"
+                        error_dict[node.lineno].append(msg)
 
 
-def check_var_name_snake_case(line, line_number, filename, error_dict):
+def check_var_name_snake_case(script, error_dict):
     import ast
-    with open(filename) as g:
-        script = g.read()
-        tree = ast.parse(script)
-        nodes = ast.walk(tree)
-        for node in nodes:
-            if isinstance(node, ast.Name) and  isinstance(node.ctx, ast.Store):
-                var_name = node.id
-                if not is_camel_case(var_name) and node.lineno == line_number:
-                        msg = f"S011 Variable '{var_name}' in function should be snake_case"
-                        error_dict[line_number].append(msg)
-                        print_msg(line_number, msg)
+    tree = ast.parse(script)
+    nodes = ast.walk(tree)
+    for node in nodes:
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            var_name = node.id
+            if not is_camel_case(var_name):
+                    msg = f"S011 Variable '{var_name}' in function should be snake_case"
+                    error_dict[node.lineno].append(msg)
 
 
-def check_default_mutable(line, line_number, error_dict):
+def check_default_mutable(script, error_dict):
     import ast
-    with open(filename) as g:
-        script = g.read()
-        tree = ast.parse(script)
-        nodes = ast.walk(tree)
-        for node in nodes:
-            if isinstance(node, ast.FunctionDef):
-                if node.lineno == line_number:
-                    for defaults in node.args.defaults:
-                        if isinstance(defaults, ast.List) or isinstance(defaults, ast.Dict):
-                            msg = f"S012 Default argument value is mutable"
-                            error_dict[line_number].append(msg)
-                            print_msg(line_number, msg)
+    tree = ast.parse(script)
+    nodes = ast.walk(tree)
+    for node in nodes:
+        if isinstance(node, ast.FunctionDef):
+            for defaults in node.args.defaults:
+                if isinstance(defaults, ast.List) or isinstance(defaults, ast.Dict):
+                    msg = f"S012 Default argument value is mutable"
+                    error_dict[node.lineno].append(msg)
 
+
+
+def print_file_errors(filename, error_dict):
+    error_dict = dict(sorted(error_dict.items(), key=lambda item: item[0]))
+    for line_number, messages in error_dict.items():
+        for msg in messages:
+            print_msg(filename, line_number, msg)
 
 
 def static_code_analyzer(file):
     error_dict = defaultdict(lambda: [])
-    error_list = {1: "S001 Too long",
-                  2: "S002 Indentation is not a multiple of four",
-                  3: "S003 Unnecessary semicolon",
-                  4: "S004 At least two spaces required before inline comments",
-                  5: "S005 TODO found",
-                  6: "S006 More than two blank lines used before this line",
-                  }
+
     with open(file) as f:
-        global filename
-        filename = file
         Lines = f.readlines()
         line_number = 0
         blank_lines = []
@@ -249,10 +242,13 @@ def static_code_analyzer(file):
             check_spaces_at_declaration(line, line_number, error_dict) # S007
             check_class_camel_case(line, line_number, error_dict) # S008
             check_func_snake_case(line, line_number, error_dict) # S009
-            check_arg_name_snake_case(line, line_number, filename, error_dict) #S010
-            check_var_name_snake_case(line, line_number,filename, error_dict)  # S011
-            check_default_mutable(line,line_number, error_dict) # S012
-
+            # uses ast module
+    with open(file) as f:
+        script = f.read()
+        check_arg_name_snake_case(script, error_dict) #S010
+        check_var_name_snake_case(script, error_dict)  # S011
+        check_default_mutable(script, error_dict) # S012
+    print_file_errors(file, error_dict)
 
 def main():
     # test = r"C:\hyper_skill\static_code_analyzer_project\Static Code Analyzer\task\analyzer\test.txt"
@@ -262,6 +258,7 @@ def main():
     file_list = list_files_from_input(sys.argv[1])
     for file in file_list:
         static_code_analyzer(file)
+        
 
 
 if __name__ == '__main__':
